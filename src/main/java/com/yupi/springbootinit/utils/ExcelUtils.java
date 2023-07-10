@@ -24,6 +24,7 @@ public class ExcelUtils {
 
     public static String excelToCsv(MultipartFile multipartFile) {
 
+        //读取excel数据
         List<Map<Integer, String>> list = null;
         try {
             list = EasyExcel.read(multipartFile.getInputStream())
@@ -34,10 +35,10 @@ public class ExcelUtils {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
         if (CollUtil.isEmpty(list)) {
             return "";
         }
+        // 转为csv格式
         StringBuilder stringBuilder = new StringBuilder();
         LinkedHashMap<Integer, String> headMap = (LinkedHashMap) list.get(0);
         List<String> headList = headMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList());
@@ -52,8 +53,5 @@ public class ExcelUtils {
         return stringBuilder.toString();
     }
 
-    public static void main(String[] args) {
 
-        excelToCsv(null);
-    }
 }

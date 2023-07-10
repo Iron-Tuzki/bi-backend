@@ -90,3 +90,8 @@ cos:
     secretKey: xxx
     region: xxx
     bucket: xxx
+# yucongming ai
+yuapi:
+  client:
+    access-key: 236syfg2hzw5iq9m2skezip07zh2trow
+    secret-key: 5as2otxzban4dc4z6qe6ek3p2k5s5x6w

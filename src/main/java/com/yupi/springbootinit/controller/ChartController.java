@@ -13,11 +13,13 @@ import com.yupi.springbootinit.constant.FileConstant;
 import com.yupi.springbootinit.constant.UserConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.exception.ThrowUtils;
+import com.yupi.springbootinit.manager.AiManager;
 import com.yupi.springbootinit.model.dto.chart.*;
 import com.yupi.springbootinit.model.dto.file.UploadFileRequest;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.enums.FileUploadBizEnum;
+import com.yupi.springbootinit.model.vo.BiResponse;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.UserService;
 import com.yupi.springbootinit.utils.ExcelUtils;
@@ -45,11 +47,17 @@ import java.io.File;
 @Slf4j
 public class ChartController {
 
+    private static final Long TUZKI_AI_MODEL_ID = 1676401059918065665L;
+
     @Resource
     private ChartService chartService;
 
     @Resource
     private UserService userService;
+
+
+    @Resource
+    private AiManager aiManager;
 
     private final static Gson GSON = new Gson();
 
@@ -268,39 +276,51 @@ public class ChartController {
      * @return
      */
     @PostMapping("/gen")
-    public BaseResponse<String> genChartByAI(@RequestPart("file") MultipartFile multipartFile,
-                                             GenChartByAiRequest genChartByAiRequest, HttpServletRequest request) {
+    public BaseResponse<BiResponse> genChartByAI(@RequestPart("file") MultipartFile multipartFile,
+                                                 GenChartByAiRequest genChartByAiRequest,
+                                                 HttpServletRequest request) {
         String name = genChartByAiRequest.getName();
         String goal = genChartByAiRequest.getGoal();
         String chartType = genChartByAiRequest.getChartType();
+        User loginUser = userService.getLoginUser(request);
 
-        ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "分析目标未输入!");
-        // ThrowUtils.throwIf(StringUtils.isBlank(chartType), ErrorCode.PARAMS_ERROR, "图表类型未输入!");
         ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100, ErrorCode.PARAMS_ERROR, "图表名称过长");
-        String result = ExcelUtils.excelToCsv(multipartFile);
+        ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "分析目标未输入!");
+        ThrowUtils.throwIf(StringUtils.isBlank(chartType), ErrorCode.PARAMS_ERROR, "图表类型未输入!");
 
-        return ResultUtils.success(result);
-        // 获取当前用户信息
-        // User loginUser = userService.getLoginUser(request);
-        //
-        // String uuid = RandomStringUtils.randomAlphanumeric(8);
-        // String filename = uuid + "-" + multipartFile.getOriginalFilename();
-        // File file = null;
-        //
-        // try {
-        //
-        //     return ResultUtils.success("");
-        // } catch (Exception e) {
-        //     throw new BusinessException(ErrorCode.SYSTEM_ERROR, "上传失败");
-        // } finally {
-        //     if (file != null) {
-        //         // 删除临时文件
-        //         boolean delete = file.delete();
-        //         if (!delete) {
-        //             // log.error("file delete error, filepath = {}", filepath);
-        //         }
-        //     }
-        // }
+        StringBuilder userInput = new StringBuilder();
+        String csv = ExcelUtils.excelToCsv(multipartFile);
+        userInput.append("你是一个数据分析师和前端开发专家, 我会给你分析需求和原始数据, 请告诉我分析结论").append("\n");
+        userInput.append("分析需求: ").append(goal).append("\n");
+        userInput.append("原始数据: ").append(csv).append("\n");
+
+        // 调用Ai接口获取回复
+        String result = aiManager.doChat(TUZKI_AI_MODEL_ID, userInput.toString());
+
+        String[] split = result.split("]]]]]");
+        if (split.length < 3) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成数据格式出错");
+        }
+
+        String chartCode = split[1];
+        String analyzeResult = split[2];
+        Chart chart = new Chart();
+        chart.setName(name);
+        chart.setGoal(goal);
+        chart.setChartType(chartType);
+        chart.setChartData(csv);
+        chart.setGenChart(chartCode);
+        chart.setGenResult(analyzeResult);
+        chart.setUserId(loginUser.getId());
+        boolean save = chartService.save(chart);
+        if (!save) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图表保存失败");
+        }
+        BiResponse biResponse = new BiResponse();
+        biResponse.setChartId(chart.getId());
+        biResponse.setGenChartCode(chartCode);
+        biResponse.setGenResult(analyzeResult);
+        return ResultUtils.success(biResponse);
     }
 
 }
