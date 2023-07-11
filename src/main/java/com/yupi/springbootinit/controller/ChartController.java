@@ -160,7 +160,7 @@ public class ChartController {
      */
     @PostMapping("/list/page")
     public BaseResponse<Page<Chart>> listChartByPage(@RequestBody ChartQueryRequest chartQueryRequest,
-                                                       HttpServletRequest request) {
+                                                     HttpServletRequest request) {
         long current = chartQueryRequest.getCurrent();
         long size = chartQueryRequest.getPageSize();
         // 限制爬虫
@@ -179,7 +179,7 @@ public class ChartController {
      */
     @PostMapping("/my/list/page")
     public BaseResponse<Page<Chart>> listMyChartByPage(@RequestBody ChartQueryRequest chartQueryRequest,
-                                                         HttpServletRequest request) {
+                                                       HttpServletRequest request) {
         if (chartQueryRequest == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -284,26 +284,27 @@ public class ChartController {
         String chartType = genChartByAiRequest.getChartType();
         User loginUser = userService.getLoginUser(request);
 
-        ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100, ErrorCode.PARAMS_ERROR, "图表名称过长");
+        ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100,
+                ErrorCode.PARAMS_ERROR, "图表名称过长");
         ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "分析目标未输入!");
         ThrowUtils.throwIf(StringUtils.isBlank(chartType), ErrorCode.PARAMS_ERROR, "图表类型未输入!");
 
         StringBuilder userInput = new StringBuilder();
         String csv = ExcelUtils.excelToCsv(multipartFile);
-        userInput.append("你是一个数据分析师和前端开发专家, 我会给你分析需求和原始数据, 请告诉我分析结论").append("\n");
-        userInput.append("分析需求: ").append(goal).append("\n");
+        userInput.append("你是一个数据分析师和前端开发专家, 我会给你分析需求和原始数据, 请告诉我图表代码及分析结论").append("\n");
+        userInput.append("分析需求: 请使用").append(chartType).append(goal).append("\n");
         userInput.append("原始数据: ").append(csv).append("\n");
 
         // 调用Ai接口获取回复
         String result = aiManager.doChat(TUZKI_AI_MODEL_ID, userInput.toString());
 
-        String[] split = result.split("]]]]]");
+        String[] split = result.split("】】】】】");
         if (split.length < 3) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "生成数据格式出错");
         }
 
-        String chartCode = split[1];
-        String analyzeResult = split[2];
+        String chartCode = split[1].trim();
+        String analyzeResult = split[2].trim();
         Chart chart = new Chart();
         chart.setName(name);
         chart.setGoal(goal);
