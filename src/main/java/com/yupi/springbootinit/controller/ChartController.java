@@ -1,5 +1,6 @@
 package com.yupi.springbootinit.controller;
 
+import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.google.gson.Gson;
@@ -35,6 +36,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * 图表接口
@@ -134,7 +138,7 @@ public class ChartController {
     }
 
     /**
-     * 根据 id 获取
+     * 根据 id 获取图表信息
      *
      * @param id
      * @return
@@ -149,6 +153,24 @@ public class ChartController {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
         return ResultUtils.success(chart);
+    }
+
+    /**
+     * 根据图表ID获取原始数据
+     * @param id
+     * @param request
+     * @return
+     */
+    @GetMapping("/get")
+    public BaseResponse<List<Map<String, Object>>> getChartDataById(long id, HttpServletRequest request) {
+        if (id <= 0) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        List<Map<String, Object>> data = chartService.getChartDataById(id);
+        if (data == null) {
+            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
+        }
+        return ResultUtils.success(data);
     }
 
     /**
@@ -284,10 +306,21 @@ public class ChartController {
         String chartType = genChartByAiRequest.getChartType();
         User loginUser = userService.getLoginUser(request);
 
+        // 表单校验
         ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100,
                 ErrorCode.PARAMS_ERROR, "图表名称过长");
         ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "分析目标未输入!");
         ThrowUtils.throwIf(StringUtils.isBlank(chartType), ErrorCode.PARAMS_ERROR, "图表类型未输入!");
+        //文件校验
+        long size = multipartFile.getSize();
+        String originalFilename = multipartFile.getOriginalFilename();
+        String suffix = FileUtil.getSuffix(originalFilename);
+        final long TEN_MB = 10 * 1024 * 1024;
+        ThrowUtils.throwIf(size > TEN_MB, ErrorCode.PARAMS_ERROR, "上传文件不能超过10MB");
+        final List<String> validSuffix = Arrays.asList("xls", "xlsx");
+        if (!validSuffix.contains(suffix)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持" + suffix + "文件类型");
+        }
 
         StringBuilder userInput = new StringBuilder();
         String csv = ExcelUtils.excelToCsv(multipartFile);

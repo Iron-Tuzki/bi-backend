@@ -6,6 +6,9 @@ import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.mapper.ChartMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Map;
+
 /**
 * @author Iron Tuzki
 * @description 针对表【chart(图表信息表)】的数据库操作Service实现
@@ -15,6 +18,12 @@ import org.springframework.stereotype.Service;
 public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     implements ChartService{
 
+    private ChartMapper chartMapper;
+    @Override
+    public List<Map<String, Object>> getChartDataById(long id) {
+        String querySql = "select * from chart_" + String.valueOf(id);
+        return chartMapper.queryChartData(querySql);
+    }
 }
 
 
