@@ -15,6 +15,7 @@ import com.yupi.springbootinit.constant.UserConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.exception.ThrowUtils;
 import com.yupi.springbootinit.manager.AiManager;
+import com.yupi.springbootinit.manager.RedisLimiterManager;
 import com.yupi.springbootinit.model.dto.chart.*;
 import com.yupi.springbootinit.model.dto.file.UploadFileRequest;
 import com.yupi.springbootinit.model.entity.Chart;
@@ -62,6 +63,9 @@ public class ChartController {
 
     @Resource
     private AiManager aiManager;
+
+    @Resource
+    private RedisLimiterManager redisLimiterManager;
 
     private final static Gson GSON = new Gson();
 
@@ -161,7 +165,7 @@ public class ChartController {
      * @param request
      * @return
      */
-    @GetMapping("/get")
+    @GetMapping("/getData")
     public BaseResponse<List<Map<String, Object>>> getChartDataById(long id, HttpServletRequest request) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -321,6 +325,8 @@ public class ChartController {
         if (!validSuffix.contains(suffix)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持" + suffix + "文件类型");
         }
+        // 限流判断，每个用户一个限流器
+        redisLimiterManager.doRateLimit("genChart_"+ loginUser.getId());
 
         StringBuilder userInput = new StringBuilder();
         String csv = ExcelUtils.excelToCsv(multipartFile);
