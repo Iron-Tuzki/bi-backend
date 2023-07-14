@@ -1,10 +1,10 @@
 package com.yupi.springbootinit.model.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Data;
 
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
 /**
  * 图表信息表
@@ -53,6 +53,16 @@ public class Chart implements Serializable {
      * 创建用户id
      */
     private Long userId;
+
+    /**
+     * AI任务执行状态
+     */
+    private String status;
+
+    /**
+     * AI任务执行信息
+     */
+    private String execMessage;
 
     /**
      * 创建时间

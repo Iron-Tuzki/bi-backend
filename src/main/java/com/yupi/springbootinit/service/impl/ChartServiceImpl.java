@@ -19,6 +19,8 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
     implements ChartService{
 
     private ChartMapper chartMapper;
+
+
     @Override
     public List<Map<String, Object>> getChartDataById(long id) {
         String querySql = "select * from chart_" + String.valueOf(id);
