@@ -7,7 +7,7 @@ import com.rabbitmq.client.MessageProperties;
 
 import java.util.Scanner;
 
-public class NewTask {
+public class MultiProducer {
 
     private static final String TASK_QUEUE_NAME = "multi_queue";
 
@@ -22,6 +22,7 @@ public class NewTask {
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNext()) {
                 String message = scanner.nextLine();
+                // 发布消息
                 // MessageProperties.PERSISTENT_TEXT_PLAIN 消息持久化
                 channel.basicPublish("", TASK_QUEUE_NAME,
                         MessageProperties.PERSISTENT_TEXT_PLAIN,

@@ -27,6 +27,7 @@ public class SingleProducer {
              */
             channel.queueDeclare(QUEUE_NAME, false, false, false, null);
             String message = "Hello World11111!";
+            // 发布消息到 hello 队列
             channel.basicPublish("", QUEUE_NAME, null, message.getBytes(StandardCharsets.UTF_8));
             System.out.println(" [x] Sent '" + message + "'");
         }

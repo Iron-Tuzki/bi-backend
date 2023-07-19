@@ -21,13 +21,13 @@ public class FanoutProducer {
         factory.setHost("localhost");
         try (Connection connection = factory.newConnection();
              Channel channel = connection.createChannel()) {
-            // 创建交换机
+            // 声明交换机
             channel.exchangeDeclare(EXCHANGE_NAME, "fanout");
 
             Scanner scanner = new Scanner(System.in);
             while (scanner.hasNext()) {
                 String message = scanner.nextLine();
-                // 发布到logs交换机绑定的所有队列，routingKey控制路由规则（发送到指定名称的队列）
+                // 发布到logs交换机绑定的所有队列，routingKey用于绑定交换机和队列
                 channel.basicPublish("logs", "", null,
                         message.getBytes("UTF-8"));
                 System.out.println(" [x] Sent '" + message + "'");
