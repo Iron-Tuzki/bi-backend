@@ -452,8 +452,6 @@ public class ChartController {
 
         BiResponse biResponse = new BiResponse();
         biResponse.setChartId(baseInfo.getId());
-        // biResponse.setGenChartCode(chartCode);
-        // biResponse.setGenResult(analyzeResult);
         return ResultUtils.success(biResponse);
     }
 
