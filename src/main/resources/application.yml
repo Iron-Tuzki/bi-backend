@@ -1,6 +1,4 @@
 # 公共配置文件
-# @author <a href="https://github.com/liyupi">程序员鱼皮</a>
-# @from <a href="https://yupi.icu">编程导航知识星球</a>
 spring:
   application:
     name: bi-backend
@@ -42,6 +40,11 @@ spring:
     multipart:
       # 大小限制
       max-file-size: 10MB
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
 server:
   address: 0.0.0.0
   port: 8080
@@ -89,7 +92,7 @@ cos:
     secretKey: xxx
     region: xxx
     bucket: xxx
-# yucongming ai
+# 鱼聪明 AI
 yuapi:
   client:
     access-key: 236syfg2hzw5iq9m2skezip07zh2trow
