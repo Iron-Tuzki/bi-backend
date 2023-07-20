@@ -51,15 +51,4 @@ public class MultiConsumer {
         }
     }
 
-    private static void doWork(String task) {
-        for (char ch : task.toCharArray()) {
-            if (ch == '.') {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException _ignored) {
-                    Thread.currentThread().interrupt();
-                }
-            }
-        }
-    }
 }
