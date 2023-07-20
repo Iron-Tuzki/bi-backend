@@ -1,14 +1,15 @@
-package com.yupi.springbootinit.mq;
+package com.yupi.springbootinit.mqDemo;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.DeliverCallback;
+
 import java.nio.charset.StandardCharsets;
 
-public class SingleConsumer {
+public class TtlConsumer {
 
-    private final static String QUEUE_NAME = "hello";
+    private final static String QUEUE_NAME = "ttl_queue";
 
     public static void main(String[] argv) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
@@ -16,7 +17,10 @@ public class SingleConsumer {
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
-        channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+        // 设置消息队列过期时间 6s
+        // Map<String, Object> params = new HashMap<>();
+        // params.put("x-message-ttl",6000);
+        // channel.queueDeclare(QUEUE_NAME, true, false, false, params);
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
         // 定义如何处理消息
@@ -25,6 +29,6 @@ public class SingleConsumer {
             String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
             System.out.println(" [x] Received '" + message + "'");
         };
-        channel.basicConsume(QUEUE_NAME, true, deliverCallback, consumerTag -> { });
+        channel.basicConsume(QUEUE_NAME, false, deliverCallback, consumerTag -> { });
     }
 }

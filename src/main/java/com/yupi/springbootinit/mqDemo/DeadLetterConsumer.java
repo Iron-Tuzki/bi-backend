@@ -1,4 +1,4 @@
-package com.yupi.springbootinit.mq;
+package com.yupi.springbootinit.mqDemo;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -9,28 +9,18 @@ import com.rabbitmq.client.DeliverCallback;
  * @author lanshu
  * @date 2023-07-19
  */
-public class DirectConsumer {
-
-    private static final String EXCHANGE_NAME = "direct_logs";
+public class DeadLetterConsumer {
+    // 死信交换机
+    private static final String DEAD_EXCHANGE_NAME = "dead_exchange";
+    // 正常业务交换机
+    private static final String NORMAL_EXCHANGE_NAME = "normal_exchange";
 
     public static void main(String[] argv) throws Exception {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost("localhost");
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
-        // 声明交换机
-        channel.exchangeDeclare(EXCHANGE_NAME, "direct");
 
-        String queueName = "queueA";
-        // 声明消息队列
-        channel.queueDeclare(queueName, true, false, false, null);
-        // 使用路由键“A”绑定队列和交换机
-        channel.queueBind(queueName, EXCHANGE_NAME, "A");
-
-        String queueName1 = "queueBC";
-        channel.queueDeclare(queueName1, true, false, false, null);
-        channel.queueBind(queueName1, EXCHANGE_NAME, "B");
-        channel.queueBind(queueName1, EXCHANGE_NAME, "C");
         System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
         // 消息接收回调函数，做某些处理
@@ -39,11 +29,13 @@ public class DirectConsumer {
             // 打印路由键和消息
             System.out.println(" [x] Received '" +
                     delivery.getEnvelope().getRoutingKey() + "':'" + message + "'");
+            // 标记为消费失败，requeue=false 使之成为死信，进入死信队列（若指定）
+            channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, false);
         };
         // autoAck = true 方便测试
-        channel.basicConsume(queueName, true, deliverCallback, consumerTag -> {
+        channel.basicConsume("xiaoli", false, deliverCallback, consumerTag -> {
         });
-        channel.basicConsume(queueName1, true, deliverCallback, consumerTag -> {
+        channel.basicConsume("xiaowang", false, deliverCallback, consumerTag -> {
         });
     }
 }
