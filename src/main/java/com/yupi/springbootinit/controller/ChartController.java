@@ -3,8 +3,8 @@ package com.yupi.springbootinit.controller;
 import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.google.gson.Gson;
 import com.yupi.springbootinit.annotation.AuthCheck;
+import com.yupi.springbootinit.bizmq.BiMessageProducer;
 import com.yupi.springbootinit.common.BaseResponse;
 import com.yupi.springbootinit.common.DeleteRequest;
 import com.yupi.springbootinit.common.ErrorCode;
@@ -49,7 +49,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 @Slf4j
 public class ChartController {
 
-    private static final Long TUZKI_AI_MODEL_ID = 1676401059918065665L;
 
     @Resource
     private ChartService chartService;
@@ -67,8 +66,8 @@ public class ChartController {
     @Resource
     private ThreadPoolExecutor threadPoolExecutor1;
 
-    private final static Gson GSON = new Gson();
-
+    @Resource
+    private BiMessageProducer biMessageProducer;
     // region 增删改查
 
     /**
@@ -335,7 +334,7 @@ public class ChartController {
         userInput.append("原始数据: ").append(csv).append("\n");
 
         // 调用Ai接口获取回复
-        String result = aiManager.doChat(TUZKI_AI_MODEL_ID, userInput.toString());
+        String result = aiManager.doChat(CommonConstant.TUZKI_AI_MODEL_ID, userInput.toString());
 
         String[] split = result.split("】】】】】");
         if (split.length < 3) {
@@ -430,7 +429,7 @@ public class ChartController {
                 return;
             }
             // 调用Ai接口获取回复
-            String result = aiManager.doChat(TUZKI_AI_MODEL_ID, userInput.toString());
+            String result = aiManager.doChat(CommonConstant.TUZKI_AI_MODEL_ID, userInput.toString());
 
             String[] split = result.split("】】】】】");
             if (split.length < 3) {
@@ -464,6 +463,63 @@ public class ChartController {
         if (!update) {
             log.info("保存【图表失败状态】失败。ID：" + chartId);
         }
+    }
+
+    /**
+     * 生成图表（消息队列）
+     *
+     * @param multipartFile
+     * @param genChartByAiRequest
+     * @param request
+     * @return
+     */
+    @PostMapping("/gen/mq")
+    public BaseResponse<BiResponse> genChartByAIMq(@RequestPart("file") MultipartFile multipartFile,
+                                                      GenChartByAiRequest genChartByAiRequest,
+                                                      HttpServletRequest request) {
+        String name = genChartByAiRequest.getName();
+        String goal = genChartByAiRequest.getGoal();
+        String chartType = genChartByAiRequest.getChartType();
+        User loginUser = userService.getLoginUser(request);
+
+        // 表单校验
+        ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100,
+                ErrorCode.PARAMS_ERROR, "图表名称过长");
+        ThrowUtils.throwIf(StringUtils.isBlank(goal), ErrorCode.PARAMS_ERROR, "分析目标未输入!");
+        ThrowUtils.throwIf(StringUtils.isBlank(chartType), ErrorCode.PARAMS_ERROR, "图表类型未输入!");
+        //文件校验
+        long size = multipartFile.getSize();
+        String originalFilename = multipartFile.getOriginalFilename();
+        String suffix = FileUtil.getSuffix(originalFilename);
+        final long TEN_MB = 10 * 1024 * 1024;
+        ThrowUtils.throwIf(size > TEN_MB, ErrorCode.PARAMS_ERROR, "上传文件不能超过10MB");
+        final List<String> validSuffix = Arrays.asList("xls", "xlsx");
+        if (!validSuffix.contains(suffix)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持" + suffix + "文件类型");
+        }
+        // 限流判断，每个用户一个限流器
+        redisLimiterManager.doRateLimit("genChart_"+ loginUser.getId());
+
+        String csv = ExcelUtils.excelToCsv(multipartFile);
+        //先存入部分基础数据
+        Chart baseInfo = new Chart();
+        baseInfo.setName(name);
+        baseInfo.setGoal(goal);
+        baseInfo.setChartType(chartType);
+        baseInfo.setChartData(csv);
+        baseInfo.setUserId(loginUser.getId());
+        baseInfo.setStatus("wait");
+        boolean save = chartService.save(baseInfo);
+        if (!save) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图表保存失败");
+        }
+
+        // 发送消息
+        biMessageProducer.sendMessage(String.valueOf(baseInfo.getId()));
+
+        BiResponse biResponse = new BiResponse();
+        biResponse.setChartId(baseInfo.getId());
+        return ResultUtils.success(biResponse);
     }
 
 }

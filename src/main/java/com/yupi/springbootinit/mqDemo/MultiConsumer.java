@@ -21,7 +21,7 @@ public class MultiConsumer {
             System.out.println(" [*] Waiting for messages. To exit press CTRL+C");
 
             // 控制单个通道的处理任务上限
-            channel.basicQos(2);
+            channel.basicQos(1);
 
             // 定义如何处理消息
             int finalI = i;
