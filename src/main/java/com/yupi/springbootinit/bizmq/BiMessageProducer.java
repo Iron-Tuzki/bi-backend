@@ -24,6 +24,6 @@ public class BiMessageProducer {
      * @param message
      */
     public void sendMessage(String message) {
-        rabbitTemplate.convertAndSend(BiMqConstant.BI_EXCHANGE_NAME, BiMqConstant.ROUTING_KEY, message);
+        rabbitTemplate.convertAndSend(BiMqConstant.BI_EXCHANGE_NAME, BiMqConstant.BI_ROUTING_KEY, message);
     }
 }

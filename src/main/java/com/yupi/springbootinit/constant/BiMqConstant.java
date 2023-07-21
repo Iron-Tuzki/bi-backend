@@ -10,5 +10,12 @@ public interface BiMqConstant {
 
     String BI_QUEUE_NAME = "bi_queue";
 
-    String ROUTING_KEY = "bi_routing_key";
+    String BI_ROUTING_KEY = "bi_routing_key";
+
+
+    String DL_EXCHANGE_NAME = "dl_exchange";
+
+    String DL_QUEUE_NAME = "dl_queue";
+
+    String DL_ROUTING_KEY = "dead_letter";
 }

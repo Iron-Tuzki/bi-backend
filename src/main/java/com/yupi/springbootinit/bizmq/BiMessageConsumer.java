@@ -47,9 +47,9 @@ public class BiMessageConsumer {
             updateChart.setStatus("running");
             boolean update = chartService.updateById(updateChart);
             if (!update) {
-                // 发生错误，手动标记消息为消费失败
-                channel.basicNack(deliveryTag, false, true);
-                handleExecutionError(chartId, "状态更改为running失败");
+                /* 发生错误，手动标记消息为消费失败, requeue=false 消息转发到死信队列 */
+                channel.basicNack(deliveryTag, false, false);
+                saveFailMessage(chartId, "状态更改为running失败");
                 return;
             }
             // 拼接用户输入，用于提问
@@ -62,13 +62,13 @@ public class BiMessageConsumer {
             userInput.append("分析需求: 请使用").append(chartType)
                     .append(goal).append("\n");
             userInput.append("原始数据: ").append(chartData).append("\n");
-            log.info("begin invoke AI service");
             // 调用Ai接口获取回复
+            log.info("begin invoke AI service");
             String result = aiManager.doChat(CommonConstant.TUZKI_AI_MODEL_ID, userInput.toString());
             String[] split = result.split("】】】】】");
             if (split.length < 3) {
-                channel.basicNack(deliveryTag, false, true);
-                handleExecutionError(chartId, "生成数据格式出错");
+                channel.basicNack(deliveryTag, false, false);
+                saveFailMessage(chartId, "AI生成数据格式出错");
                 return;
             }
             log.info("end invoke AI service");
@@ -80,8 +80,8 @@ public class BiMessageConsumer {
             updateChart.setStatus("success");
             boolean up = chartService.updateById(updateChart);
             if (!up) {
-                channel.basicNack(deliveryTag, false, true);
-                handleExecutionError(chartId, "图表最终数据插入失败");
+                channel.basicNack(deliveryTag, false, false);
+                saveFailMessage(chartId, "图表最终数据插入失败");
             }
             // 所有业务执行成功，确认消费成功
             channel.basicAck(deliveryTag, false);
@@ -90,7 +90,12 @@ public class BiMessageConsumer {
         }
     }
 
-    private void handleExecutionError(long chartId, String execMessage) {
+    /**
+     * 保存错误信息到数据库
+     * @param chartId
+     * @param execMessage
+     */
+    private void saveFailMessage(long chartId, String execMessage) {
         Chart chart = new Chart();
         chart.setId(chartId);
         chart.setStatus("fail");
