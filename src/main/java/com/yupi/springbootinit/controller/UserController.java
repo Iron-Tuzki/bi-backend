@@ -254,7 +254,7 @@ public class UserController {
      * @param request
      * @return
      */
-    @PostMapping("/list/page/vo")
+    @PostMapping("/searchUsers")
     public BaseResponse<Page<UserVO>> listUserVOByPage(@RequestBody UserQueryRequest userQueryRequest,
             HttpServletRequest request) {
         if (userQueryRequest == null) {
@@ -281,7 +281,7 @@ public class UserController {
      * @param request
      * @return
      */
-    @PostMapping("/update/my")
+    @PostMapping("/updateMyInfo")
     public BaseResponse<Boolean> updateMyUser(@RequestBody UserUpdateMyRequest userUpdateMyRequest,
             HttpServletRequest request) {
         if (userUpdateMyRequest == null) {

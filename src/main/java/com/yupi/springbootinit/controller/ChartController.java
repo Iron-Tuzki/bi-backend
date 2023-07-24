@@ -196,13 +196,13 @@ public class ChartController {
     }
 
     /**
-     * 分页获取当前用户创建的资源列表
+     * 分页获取当前用户创建的图表列表
      *
      * @param chartQueryRequest
      * @param request
      * @return
      */
-    @PostMapping("/my/list/page")
+    @PostMapping("/myChartsPage")
     public BaseResponse<Page<Chart>> listMyChartByPage(@RequestBody ChartQueryRequest chartQueryRequest,
                                                        HttpServletRequest request) {
         if (chartQueryRequest == null) {
@@ -282,7 +282,7 @@ public class ChartController {
         // 拼接查询条件
         queryWrapper.eq(id != null && id > 0, "id", id);
         queryWrapper.like(StringUtils.isNotBlank(name), "name", name);
-        queryWrapper.eq(StringUtils.isNotBlank(goal), "goal", goal);
+        queryWrapper.like(StringUtils.isNotBlank(goal), "goal", goal);
         queryWrapper.eq(StringUtils.isNotBlank(chartType), "chartType", chartType);
         queryWrapper.eq(ObjectUtils.isNotEmpty(userId), "userId", userId);
         queryWrapper.eq("isDelete", false);
@@ -300,7 +300,7 @@ public class ChartController {
      * @param request
      * @return
      */
-    @PostMapping("/gen")
+    @PostMapping("/genByAi")
     public BaseResponse<BiResponse> genChartByAI(@RequestPart("file") MultipartFile multipartFile,
                                                  GenChartByAiRequest genChartByAiRequest,
                                                  HttpServletRequest request) {
@@ -371,7 +371,7 @@ public class ChartController {
      * @param request
      * @return
      */
-    @PostMapping("/gen/Async")
+    @PostMapping("/genByAiAsync")
     public BaseResponse<BiResponse> genChartByAIAsync(@RequestPart("file") MultipartFile multipartFile,
                                                  GenChartByAiRequest genChartByAiRequest,
                                                  HttpServletRequest request) {
@@ -473,7 +473,7 @@ public class ChartController {
      * @param request
      * @return
      */
-    @PostMapping("/gen/mq")
+    @PostMapping("/genByAiMq")
     public BaseResponse<BiResponse> genChartByAIMq(@RequestPart("file") MultipartFile multipartFile,
                                                       GenChartByAiRequest genChartByAiRequest,
                                                       HttpServletRequest request) {
