@@ -66,8 +66,7 @@ public class ChartController {
     @Resource
     private ThreadPoolExecutor threadPoolExecutor1;
 
-    @Resource
-    private BiMessageProducer biMessageProducer;
+
     // region 增删改查
 
     /**
@@ -147,7 +146,7 @@ public class ChartController {
      * @return
      */
     @GetMapping("/get")
-    public BaseResponse<Chart> getChartById(long id, HttpServletRequest request) {
+    public BaseResponse<Chart> getChartById(long id) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -161,11 +160,10 @@ public class ChartController {
     /**
      * 根据图表ID从对应的表中获取原始数据
      * @param id
-     * @param request
      * @return
      */
     @GetMapping("/getData")
-    public BaseResponse<List<Map<String, Object>>> getChartDataById(long id, HttpServletRequest request) {
+    public BaseResponse<List<Map<String, Object>>> getChartDataById(long id) {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -180,12 +178,10 @@ public class ChartController {
      * 分页获取列表（封装类）
      *
      * @param chartQueryRequest
-     * @param request
      * @return
      */
     @PostMapping("/list/page")
-    public BaseResponse<Page<Chart>> listChartByPage(@RequestBody ChartQueryRequest chartQueryRequest,
-                                                     HttpServletRequest request) {
+    public BaseResponse<Page<Chart>> listChartByPage(@RequestBody ChartQueryRequest chartQueryRequest) {
         long current = chartQueryRequest.getCurrent();
         long size = chartQueryRequest.getPageSize();
         // 限制爬虫
@@ -218,25 +214,6 @@ public class ChartController {
                 getQueryWrapper(chartQueryRequest));
         return ResultUtils.success(chartPage);
     }
-
-    // endregion
-
-    // /**
-    //  * 分页搜索（从 ES 查询，封装类）
-    //  *
-    //  * @param chartQueryRequest
-    //  * @param request
-    //  * @return
-    //  */
-    // @PostMapping("/search/page/vo")
-    // public BaseResponse<Page<ChartVO>> searchChartVOByPage(@RequestBody ChartQueryRequest chartQueryRequest,
-    //         HttpServletRequest request) {
-    //     long size = chartQueryRequest.getPageSize();
-    //     // 限制爬虫
-    //     ThrowUtils.throwIf(size > 20, ErrorCode.PARAMS_ERROR);
-    //     Page<Chart> chartPage = chartService.searchFromEs(chartQueryRequest);
-    //     return ResultUtils.success(chartService.getChartVOPage(chartPage, request));
-    // }
 
     /**
      * 编辑（用户）
@@ -480,7 +457,7 @@ public class ChartController {
         String name = genChartByAiRequest.getName();
         String goal = genChartByAiRequest.getGoal();
         String chartType = genChartByAiRequest.getChartType();
-        User loginUser = userService.getLoginUser(request);
+        Long userId = userService.getLoginUser(request).getId();
 
         // 表单校验
         ThrowUtils.throwIf(StringUtils.isNotBlank(name) && name.length() > 100,
@@ -498,27 +475,12 @@ public class ChartController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持" + suffix + "文件类型");
         }
         // 限流判断，每个用户一个限流器
-        redisLimiterManager.doRateLimit("genChart_"+ loginUser.getId());
+        redisLimiterManager.doRateLimit("genChart_"+ userId);
 
-        String csv = ExcelUtils.excelToCsv(multipartFile);
-        //先存入部分基础数据
-        Chart baseInfo = new Chart();
-        baseInfo.setName(name);
-        baseInfo.setGoal(goal);
-        baseInfo.setChartType(chartType);
-        baseInfo.setChartData(csv);
-        baseInfo.setUserId(loginUser.getId());
-        baseInfo.setStatus("wait");
-        boolean save = chartService.save(baseInfo);
-        if (!save) {
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "图表保存失败");
-        }
-
-        // 发送消息
-        biMessageProducer.sendMessage(String.valueOf(baseInfo.getId()));
+        long chartId = chartService.genChartAndTable(multipartFile, name, goal, chartType, userId);
 
         BiResponse biResponse = new BiResponse();
-        biResponse.setChartId(baseInfo.getId());
+        biResponse.setChartId(chartId);
         return ResultUtils.success(biResponse);
     }
 
