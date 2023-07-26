@@ -4,7 +4,6 @@ import cn.hutool.core.io.FileUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.yupi.springbootinit.annotation.AuthCheck;
-import com.yupi.springbootinit.bizmq.BiMessageProducer;
 import com.yupi.springbootinit.common.BaseResponse;
 import com.yupi.springbootinit.common.DeleteRequest;
 import com.yupi.springbootinit.common.ErrorCode;
@@ -20,6 +19,7 @@ import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.BiResponse;
 import com.yupi.springbootinit.service.ChartService;
+import com.yupi.springbootinit.service.ChartSqlInfoService;
 import com.yupi.springbootinit.service.UserService;
 import com.yupi.springbootinit.utils.ExcelUtils;
 import com.yupi.springbootinit.utils.SqlUtils;
@@ -52,6 +52,9 @@ public class ChartController {
 
     @Resource
     private ChartService chartService;
+
+    @Resource
+    private ChartSqlInfoService chartSqlInfoService;
 
     @Resource
     private UserService userService;
@@ -167,7 +170,7 @@ public class ChartController {
         if (id <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        List<Map<String, Object>> data = chartService.getChartDataById(id);
+        List<Map<String, Object>> data = chartSqlInfoService.getChartDataById(id);
         if (data == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -311,7 +314,7 @@ public class ChartController {
         userInput.append("原始数据: ").append(csv).append("\n");
 
         // 调用Ai接口获取回复
-        String result = aiManager.doChat(CommonConstant.TUZKI_AI_MODEL_ID, userInput.toString());
+        String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput.toString(),null);
 
         String[] split = result.split("】】】】】");
         if (split.length < 3) {
@@ -406,7 +409,7 @@ public class ChartController {
                 return;
             }
             // 调用Ai接口获取回复
-            String result = aiManager.doChat(CommonConstant.TUZKI_AI_MODEL_ID, userInput.toString());
+            String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput.toString(), null);
 
             String[] split = result.split("】】】】】");
             if (split.length < 3) {

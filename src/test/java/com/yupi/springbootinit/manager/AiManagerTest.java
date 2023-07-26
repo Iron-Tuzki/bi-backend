@@ -1,11 +1,10 @@
 package com.yupi.springbootinit.manager;
 
+import com.yupi.springbootinit.constant.CommonConstant;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import javax.annotation.Resource;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class AiManagerTest {
@@ -15,16 +14,14 @@ class AiManagerTest {
 
     @Test
     void doChat() {
-        String result = aiManager.doChat(1676401059918065665L, "\n" +
-                "你是一个数据分析师和前端开发专家, 我会给你分析目标和原始数据, 请告诉我图表代码和分析结论，图表使用柱状图\n" +
-                "分析需求:\n" +
-                "分析网站用户增长趋势\n" +
-                "原始数据:\n" +
-                "日期,用户数\n" +
-                "2022-12-1,100\n" +
-                "2022-12-2,300\n" +
-                "2022-12-3,250\n" +
-                "2022-12-4,600");
+
+        StringBuilder userInput = new StringBuilder();
+        userInput.append("你是一个数据库工程师，擅长写sql语句。\n" +
+                "我会告诉你表名和字段的注释，请告诉我mysql的建表语句，不要任何其他内容，字段名为英语且为驼峰格式").append("\n");
+        userInput.append("表名：chart_").append("123123").append("\n");
+        userInput.append("字段注释：").append("日期，降雨量").append("\n");
+
+        String result = aiManager.doChat(CommonConstant.SQL_AI_MODEL_ID, userInput.toString(), null);
         System.out.println(result);
     }
 }

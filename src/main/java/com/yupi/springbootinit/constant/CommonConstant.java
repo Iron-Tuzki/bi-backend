@@ -18,6 +18,8 @@ public interface CommonConstant {
      */
     String SORT_ORDER_DESC = " descend";
 
-    Long TUZKI_AI_MODEL_ID = 1676401059918065665L;
+    Long CHART_AI_MODEL_ID = 1676401059918065665L;
+
+    Long SQL_AI_MODEL_ID = 1683705854576144385L;
     
 }

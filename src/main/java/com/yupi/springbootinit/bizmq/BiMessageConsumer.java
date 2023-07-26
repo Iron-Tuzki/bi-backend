@@ -1,5 +1,6 @@
 package com.yupi.springbootinit.bizmq;
 
+import cn.hutool.json.JSONUtil;
 import com.rabbitmq.client.Channel;
 import com.yupi.springbootinit.common.ErrorCode;
 import com.yupi.springbootinit.constant.BiMqConstant;
@@ -28,9 +29,12 @@ public class BiMessageConsumer {
 
     @Resource
     private ChartService chartService;
+
+    @Resource
+    private SqlMessageProducer sqlMessageProducer;
+
     @Resource
     private AiManager aiManager;
-    private static final Long TUZKI_AI_MODEL_ID = 1676401059918065665L;
 
     @RabbitListener(queues = {BiMqConstant.BI_QUEUE_NAME}, ackMode = "MANUAL")
     public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
@@ -62,19 +66,26 @@ public class BiMessageConsumer {
             userInput.append("分析需求: 请使用").append(chartType)
                     .append(goal).append("\n");
             userInput.append("原始数据: ").append(chartData).append("\n");
-            // 调用Ai接口获取回复
-            log.info("begin invoke AI service");
-            String result = aiManager.doChat(CommonConstant.TUZKI_AI_MODEL_ID, userInput.toString());
+
+            /* 开始调用Ai接口获取图表信息 */
+            log.info("begin invoke AI service 4 bi");
+            String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput.toString(), BiMqConstant.BI_QUEUE_NAME);
+
             String[] split = result.split("】】】】】");
             if (split.length < 3) {
                 channel.basicNack(deliveryTag, false, false);
                 saveFailMessage(chartId, "AI生成数据格式出错");
                 return;
             }
-            log.info("end invoke AI service");
-            // 更新AI生成的数据
-            String chartCode = split[1].trim();
+            String code = split[1].trim();
             String analyzeResult = split[2].trim();
+            /* 校验json格式 */
+            /* 若流程中发生异常，未手动确认消费成功或失败，则该消息会重新进入原队列。 */
+            String chartCode = JSONUtil.toJsonStr(JSONUtil.parseObj(code));
+            log.info("end invoke AI service 4 bi");
+            /* 结束调用Ai接口获取图表信息 */
+
+            // 更新AI生成的数据
             updateChart.setGenChart(chartCode);
             updateChart.setGenResult(analyzeResult);
             updateChart.setStatus("success");
@@ -83,7 +94,7 @@ public class BiMessageConsumer {
                 channel.basicNack(deliveryTag, false, false);
                 saveFailMessage(chartId, "图表最终数据插入失败");
             }
-            // 所有业务执行成功，确认消费成功
+            // BI图表业务执行成功，确认消费成功
             channel.basicAck(deliveryTag, false);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -92,13 +103,14 @@ public class BiMessageConsumer {
 
     /**
      * 保存错误信息到数据库
-     * @param chartId
-     * @param execMessage
+     *
+     * @param chartId     id
+     * @param execMessage 错误信息
      */
     private void saveFailMessage(long chartId, String execMessage) {
         Chart chart = new Chart();
         chart.setId(chartId);
-        chart.setStatus("fail");
+        // chart.setStatus("fail");
         chart.setExecMessage(execMessage);
         boolean update = chartService.updateById(chart);
         if (!update) {

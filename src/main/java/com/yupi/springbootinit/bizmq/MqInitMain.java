@@ -27,8 +27,11 @@ public class MqInitMain {
             channel.queueDeclare(BiMqConstant.DL_QUEUE_NAME, true, false, false, null);
             channel.queueBind(BiMqConstant.DL_QUEUE_NAME, BiMqConstant.DL_EXCHANGE_NAME, BiMqConstant.DL_ROUTING_KEY);
 
+            channel.queueDeclare(BiMqConstant.DL_QUEUE_SQL_NAME, true, false, false, null);
+            channel.queueBind(BiMqConstant.DL_QUEUE_SQL_NAME, BiMqConstant.DL_EXCHANGE_NAME, BiMqConstant.DL_ROUTING_SQL_KEY);
+
             /* 正常业务交换机和队列
-            * params 用于绑定死信交换机 */
+             * params 用于绑定死信交换机 */
             Map<String, Object> params = new HashMap<>();
             params.put("x-dead-letter-exchange", BiMqConstant.DL_EXCHANGE_NAME);
             params.put("x-dead-letter-routing-key", BiMqConstant.DL_ROUTING_KEY);
@@ -36,6 +39,14 @@ public class MqInitMain {
             channel.exchangeDeclare(BiMqConstant.BI_EXCHANGE_NAME, "direct");
             channel.queueDeclare(BiMqConstant.BI_QUEUE_NAME, true, false, false, params);
             channel.queueBind(BiMqConstant.BI_QUEUE_NAME, BiMqConstant.BI_EXCHANGE_NAME, BiMqConstant.BI_ROUTING_KEY);
+
+
+            Map<String, Object> params1 = new HashMap<>();
+            params1.put("x-dead-letter-exchange", BiMqConstant.DL_EXCHANGE_NAME);
+            params1.put("x-dead-letter-routing-key", BiMqConstant.DL_ROUTING_SQL_KEY);
+
+            channel.queueDeclare(BiMqConstant.SQL_QUEUE_NAME, true, false, false, params1);
+            channel.queueBind(BiMqConstant.SQL_QUEUE_NAME, BiMqConstant.BI_EXCHANGE_NAME, BiMqConstant.SQL_ROUTING_KEY);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
