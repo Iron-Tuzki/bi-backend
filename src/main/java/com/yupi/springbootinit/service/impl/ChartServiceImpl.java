@@ -8,6 +8,7 @@ import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.mapper.ChartMapper;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.ChartSqlInfo;
+import com.yupi.springbootinit.model.vo.SimpleChartInfo;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.ChartSqlInfoService;
 import com.yupi.springbootinit.utils.ExcelUtils;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -73,6 +75,11 @@ public class ChartServiceImpl extends ServiceImpl<ChartMapper, Chart>
         biMessageProducer.sendMessage(String.valueOf(chart.getId()));
 
         return chart.getId();
+    }
+
+    @Override
+    public List<SimpleChartInfo> getSimpleInfo(Long userId) {
+        return chartMapper.getSimpleInfo(userId);
     }
 }
 

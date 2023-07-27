@@ -27,4 +27,12 @@
         isDelete
     </sql>
 
+    <select id="getSimpleInfo" resultType="com.yupi.springbootinit.model.vo.SimpleChartInfo">
+        select id as chartId, name, chartType, status
+        from chart
+        where userId = #{userId}
+        order by updateTime desc
+            limit 5
+    </select>
+
 </mapper>

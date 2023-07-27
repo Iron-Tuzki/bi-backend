@@ -2,7 +2,10 @@ package com.yupi.springbootinit.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.yupi.springbootinit.model.entity.Chart;
+import com.yupi.springbootinit.model.vo.SimpleChartInfo;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
 * @author Iron Tuzki
@@ -14,4 +17,6 @@ public interface ChartService extends IService<Chart> {
 
 
     long genChartAndTable(MultipartFile multipartFile, String name, String goal, String chartType, Long userId);
+
+    List<SimpleChartInfo> getSimpleInfo(Long userId);
 }

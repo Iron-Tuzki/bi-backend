@@ -21,9 +21,10 @@ public class ChartSqlInfoServiceImpl extends ServiceImpl<ChartSqlInfoMapper, Cha
 
     @Resource
     private ChartSqlInfoMapper chartSqlInfoMapper;
+
     @Override
-    public List<Map<String, Object>> getChartDataById(long id) {
-        String querySql = "select * from chart_" + String.valueOf(id);
+    public List<Map<String, Object>> getChartDataById(long chartId) {
+        String querySql = "select * from chart_" + chartId;
         return chartSqlInfoMapper.queryChartData(querySql);
     }
 }

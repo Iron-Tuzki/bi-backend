@@ -61,15 +61,13 @@ public class BiMessageConsumer {
             String chartType = baseInfo.getChartType();
             String goal = baseInfo.getGoal();
             String chartData = baseInfo.getChartData();
-            StringBuilder userInput = new StringBuilder();
-            userInput.append("你是一个数据分析师和前端开发专家, 我会给你分析需求和原始数据, 请告诉我图表代码及分析结论").append("\n");
-            userInput.append("分析需求: 请使用").append(chartType)
-                    .append(goal).append("\n");
-            userInput.append("原始数据: ").append(chartData).append("\n");
+            String userInput = "你是一个数据分析师和前端开发专家, 我会给你分析需求和原始数据, 请告诉我图表代码及分析结论。\n" +
+                    "分析需求: 请使用" + chartType + goal + "\n" +
+                    "原始数据: " + chartData + "\n";
 
             /* 开始调用Ai接口获取图表信息 */
             log.info("begin invoke AI service 4 bi");
-            String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput.toString(), BiMqConstant.BI_QUEUE_NAME);
+            String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput, BiMqConstant.BI_QUEUE_NAME);
 
             String[] split = result.split("】】】】】");
             if (split.length < 3) {

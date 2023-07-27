@@ -18,13 +18,14 @@
     <sql id="Base_Column_List">
         chartId,headers,tableSql,columnNames,insertSql,status,execMessage,isDelete
     </sql>
+
     <select id="queryChartData" resultType="java.util.Map">
         ${querySql}
     </select>
 
-    <sql id="createChartTable">
+    <select id="createTable">
         ${sql}
-    </sql>
+    </select>
 
     <insert id="insertData">
         ${sql}

@@ -12,5 +12,5 @@ import java.util.Map;
 * @createDate 2023-07-25 15:55:20
 */
 public interface ChartSqlInfoService extends IService<ChartSqlInfo> {
-    List<Map<String, Object>> getChartDataById(long id);
+    List<Map<String, Object>> getChartDataById(long chartId);
 }

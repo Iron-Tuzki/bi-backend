@@ -1,7 +1,8 @@
 package com.yupi.springbootinit.mapper;
 
-import com.yupi.springbootinit.model.entity.ChartSqlInfo;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.yupi.springbootinit.model.entity.ChartSqlInfo;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Map;
@@ -16,9 +17,9 @@ public interface ChartSqlInfoMapper extends BaseMapper<ChartSqlInfo> {
 
     List<Map<String, Object>> queryChartData(String querySql);
 
-    void createChartTable(String sql);
+    void createTable(@Param("sql") String sql);
 
-    void insertData(String sql);
+    void insertData(@Param("sql") String sql);
 }
 
 

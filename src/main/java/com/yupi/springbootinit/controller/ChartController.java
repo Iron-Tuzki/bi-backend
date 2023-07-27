@@ -18,6 +18,7 @@ import com.yupi.springbootinit.model.dto.chart.*;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.BiResponse;
+import com.yupi.springbootinit.model.vo.SimpleChartInfo;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.ChartSqlInfoService;
 import com.yupi.springbootinit.service.UserService;
@@ -162,15 +163,15 @@ public class ChartController {
 
     /**
      * 根据图表ID从对应的表中获取原始数据
-     * @param id
+     * @param chartId
      * @return
      */
     @GetMapping("/getData")
-    public BaseResponse<List<Map<String, Object>>> getChartDataById(long id) {
-        if (id <= 0) {
+    public BaseResponse<List<Map<String, Object>>> getChartDataById(long chartId) {
+        if (chartId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
-        List<Map<String, Object>> data = chartSqlInfoService.getChartDataById(id);
+        List<Map<String, Object>> data = chartSqlInfoService.getChartDataById(chartId);
         if (data == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
@@ -216,6 +217,19 @@ public class ChartController {
         Page<Chart> chartPage = chartService.page(new Page<>(current, size),
                 getQueryWrapper(chartQueryRequest));
         return ResultUtils.success(chartPage);
+    }
+
+    /**
+     * 提交界面用于预览最近10个已提交任务的部分信息
+     * @param request
+     * @return
+     */
+    @GetMapping("/preview")
+    public BaseResponse<List<SimpleChartInfo>> listMySimpleCharts(HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        Long userId = loginUser.getId();
+        List<SimpleChartInfo> list = chartService.getSimpleInfo(userId);
+        return ResultUtils.success(list);
     }
 
     /**

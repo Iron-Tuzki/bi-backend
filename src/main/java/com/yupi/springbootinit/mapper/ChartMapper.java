@@ -2,6 +2,10 @@ package com.yupi.springbootinit.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.yupi.springbootinit.model.entity.Chart;
+import com.yupi.springbootinit.model.vo.SimpleChartInfo;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
 * @author Iron Tuzki
@@ -12,7 +16,7 @@ import com.yupi.springbootinit.model.entity.Chart;
 public interface ChartMapper extends BaseMapper<Chart> {
 
 
-
+    List<SimpleChartInfo> getSimpleInfo(@Param("userId") Long userId);
 }
 
 

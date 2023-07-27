@@ -9,7 +9,6 @@ import com.yupi.springbootinit.manager.AiManager;
 import com.yupi.springbootinit.mapper.ChartSqlInfoMapper;
 import com.yupi.springbootinit.model.entity.ChartSqlInfo;
 import com.yupi.springbootinit.service.ChartSqlInfoService;
-import com.yupi.springbootinit.utils.SqlExecuteUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -18,7 +17,6 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.sql.SQLException;
 
 /**
  * @author lanshu
@@ -37,8 +35,6 @@ public class SqlMessageConsumer {
     @Resource
     private ChartSqlInfoMapper chartSqlInfoMapper;
 
-    @Resource
-    private SqlExecuteUtils sqlExecuteUtils;
 
     @RabbitListener(queues = {BiMqConstant.SQL_QUEUE_NAME}, ackMode = "MANUAL")
     public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
@@ -62,15 +58,14 @@ public class SqlMessageConsumer {
             ChartSqlInfo info = chartSqlInfoService.getById(chartId);
             String headers = info.getHeaders();
             String sql4Insert = "insert into chart_" + message + " values " + info.getInsertSql();
-            StringBuilder userInput = new StringBuilder();
-            userInput.append("你是一个数据库工程师，擅长写sql语句。\n" +
-                    "我会告诉你表名和字段的注释，请告诉我mysql的建表语句，不要任何其他内容，字段名为英语且为驼峰格式").append("\n");
-            userInput.append("表名：chart_").append(message).append("\n");
-            userInput.append("字段注释：").append(headers).append("\n");
+            String userInput = "你是一个数据库工程师，擅长写sql语句。\n" +
+                    "我会告诉你表名和字段的注释，请告诉我mysql的建表语句，不要任何其他内容，字段名为英语且为驼峰格式\n" +
+                    "表名：chart_" + message + "\n" +
+                    "字段注释：" + headers + "\n";
 
             /* 调用AI接口 */
             log.info("begin invoke AI service 4 sql");
-            String sql4Table = aiManager.doChat(CommonConstant.SQL_AI_MODEL_ID, userInput.toString(), BiMqConstant.SQL_QUEUE_NAME);
+            String sql4Table = aiManager.doChat(CommonConstant.SQL_AI_MODEL_ID, userInput, BiMqConstant.SQL_QUEUE_NAME);
             log.info("sql create table :::" + sql4Table);
             log.info("sql insert date :::" + sql4Insert);
             try {
@@ -84,9 +79,11 @@ public class SqlMessageConsumer {
                     saveFailMessage(chartId, "更新chart sql失败");
                     return;
                 }
-                sqlExecuteUtils.execute(sql4Table);
-                sqlExecuteUtils.execute(sql4Insert);
-            } catch (SQLException e) {
+                // sqlExecuteUtils.execute(sql4Table);
+                // sqlExecuteUtils.execute(sql4Insert);
+                chartSqlInfoMapper.createTable(sql4Table);
+                chartSqlInfoMapper.insertData(sql4Insert);
+            } catch (RuntimeException e) {
                 channel.basicNack(deliveryTag, false, false);
                 saveFailMessage(chartId, "sql格式有错误或建表、插入数据失败");
                 log.error(e.getMessage());
