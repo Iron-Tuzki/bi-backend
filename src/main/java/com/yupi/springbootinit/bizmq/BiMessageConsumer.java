@@ -58,6 +58,11 @@ public class BiMessageConsumer {
             }
             // 拼接用户输入，用于提问
             Chart baseInfo = chartService.getById(chartId);
+            if (baseInfo == null) {
+                channel.basicNack(deliveryTag, false, false);
+                saveFailMessage(chartId, "图表数据不存在");
+                return;
+            }
             String chartType = baseInfo.getChartType();
             String goal = baseInfo.getGoal();
             String chartData = baseInfo.getChartData();
@@ -72,13 +77,13 @@ public class BiMessageConsumer {
             String[] split = result.split("】】】】】");
             if (split.length < 3) {
                 channel.basicNack(deliveryTag, false, false);
-                saveFailMessage(chartId, "AI生成数据格式出错");
+                saveFailMessage(chartId, "AI生成图表数据格式出错");
                 return;
             }
             String code = split[1].trim();
             String analyzeResult = split[2].trim();
             /* 校验json格式 */
-            /* 若流程中发生异常，未手动确认消费成功或失败，则该消息会重新进入原队列。 */
+            /* 若流程中发生异常，未手动确认消费成功或失败，则该消息会重新进入原队列，下次重启后会重新消费 */
             String chartCode = JSONUtil.toJsonStr(JSONUtil.parseObj(code));
             log.info("end invoke AI service 4 bi");
             /* 结束调用Ai接口获取图表信息 */
@@ -94,6 +99,7 @@ public class BiMessageConsumer {
             }
             // BI图表业务执行成功，确认消费成功
             channel.basicAck(deliveryTag, false);
+            // todo 发送消息告知用户成功，
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

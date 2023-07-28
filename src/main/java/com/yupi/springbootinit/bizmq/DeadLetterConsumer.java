@@ -41,6 +41,7 @@ public class DeadLetterConsumer {
             chart.setId(chartId);
             chart.setStatus("fail");
             boolean update = chartService.updateById(chart);
+            // todo 通知用户图表任务失败
             if (!update) {
                 log.info("更改【图表失败状态】失败。ID：" + chartId);
                 channel.basicNack(deliveryTag, false, true);
@@ -60,6 +61,7 @@ public class DeadLetterConsumer {
             chartSqlInfo.setChartId(chartId);
             chartSqlInfo.setStatus("fail");
             boolean update = chartSqlInfoService.updateById(chartSqlInfo);
+            // todo 通知用户sql任务失败
             if (!update) {
                 log.info("更改【失败状态】失败。ID：" + chartId);
                 channel.basicNack(deliveryTag, false, true);

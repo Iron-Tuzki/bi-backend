@@ -37,7 +37,9 @@ public class SqlMessageConsumer {
 
 
     @RabbitListener(queues = {BiMqConstant.SQL_QUEUE_NAME}, ackMode = "MANUAL")
-    public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
+    public void receiveMessage(String message,
+                               Channel channel,
+                               @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         try {
             if (StringUtils.isBlank(message)) {
                 channel.basicNack(deliveryTag, false, false);

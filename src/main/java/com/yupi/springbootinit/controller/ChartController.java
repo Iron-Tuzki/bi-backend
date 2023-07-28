@@ -166,7 +166,7 @@ public class ChartController {
      * @param chartId
      * @return
      */
-    @GetMapping("/getData")
+    @GetMapping("/getOriginalData")
     public BaseResponse<List<Map<String, Object>>> getChartDataById(long chartId) {
         if (chartId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
