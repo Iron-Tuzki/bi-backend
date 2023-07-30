@@ -102,7 +102,7 @@ create table if not exists chart
     isDelete    tinyint                                     default 0                 not null comment '是否删除'
 ) comment '图表信息表' collate = utf8mb4_unicode_ci;
 
-create table if not exist chart_sql_info
+create table if not exists chart_sql_info
 (
     chartId     bigint                                                                not null comment '图表id',
     headers     text                                                                  null comment '列名',
