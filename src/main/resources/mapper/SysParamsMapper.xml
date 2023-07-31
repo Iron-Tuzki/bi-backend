@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yupi.springbootinit.mapper.SysParamsMapper">
+
+    <update id="update">
+        update sys_params
+        <trim prefix="set" suffixOverrides=",">
+            <if test="isNotifyChart != null and isNotifyChart != ''">
+                isNotifyChart = #{isNotifyChart} ,
+            </if>
+            <if test="isNotifySql != null and isNotifySql != ''">
+                isNotifySql = #{isNotifySql} ,
+            </if>
+        </trim>
+        where userId = #{userId}
+    </update>
+
+    <select id="get" resultType="java.util.Map">
+        select isNotifyChart, isNotifySql
+        from sys_params
+        where userId = #{userId}
+    </select>
+</mapper>
