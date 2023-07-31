@@ -20,6 +20,8 @@ public interface ChartSqlInfoMapper extends BaseMapper<ChartSqlInfo> {
     void createTable(@Param("sql") String sql);
 
     void insertData(@Param("sql") String sql);
+
+    Map<String, String> getColumnsAndHeaders(long chartId);
 }
 
 

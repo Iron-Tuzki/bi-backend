@@ -18,6 +18,7 @@ import com.yupi.springbootinit.model.dto.chart.*;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.BiResponse;
+import com.yupi.springbootinit.model.vo.OriginalDataVO;
 import com.yupi.springbootinit.model.vo.SimpleChartInfo;
 import com.yupi.springbootinit.service.ChartService;
 import com.yupi.springbootinit.service.ChartSqlInfoService;
@@ -33,9 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 
@@ -163,11 +162,12 @@ public class ChartController {
 
     /**
      * 根据图表ID从对应的表中获取原始数据
+     *
      * @param chartId
      * @return
      */
     @GetMapping("/getOriginalData")
-    public BaseResponse<List<Map<String, Object>>> getChartDataById(long chartId) {
+    public BaseResponse<OriginalDataVO> getChartDataById(long chartId) {
         if (chartId <= 0) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
@@ -175,7 +175,12 @@ public class ChartController {
         if (data == null) {
             throw new BusinessException(ErrorCode.NOT_FOUND_ERROR);
         }
-        return ResultUtils.success(data);
+        OriginalDataVO originalDataVO = new OriginalDataVO();
+        originalDataVO.setOriginalData(data);
+        List<HashMap<String, String>> columns = chartSqlInfoService.getColumns(chartId);
+        originalDataVO.setColumns(columns);
+
+        return ResultUtils.success(originalDataVO);
     }
 
     /**
@@ -221,6 +226,7 @@ public class ChartController {
 
     /**
      * 提交界面用于预览最近10个已提交任务的部分信息
+     *
      * @param request
      * @return
      */
@@ -328,7 +334,7 @@ public class ChartController {
         userInput.append("原始数据: ").append(csv).append("\n");
 
         // 调用Ai接口获取回复
-        String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput.toString(),null);
+        String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput.toString(), null);
 
         String[] split = result.split("】】】】】");
         if (split.length < 3) {
@@ -367,8 +373,8 @@ public class ChartController {
      */
     @PostMapping("/genByAiAsync")
     public BaseResponse<BiResponse> genChartByAIAsync(@RequestPart("file") MultipartFile multipartFile,
-                                                 GenChartByAiRequest genChartByAiRequest,
-                                                 HttpServletRequest request) {
+                                                      GenChartByAiRequest genChartByAiRequest,
+                                                      HttpServletRequest request) {
         String name = genChartByAiRequest.getName();
         String goal = genChartByAiRequest.getGoal();
         String chartType = genChartByAiRequest.getChartType();
@@ -390,7 +396,7 @@ public class ChartController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持" + suffix + "文件类型");
         }
         // 限流判断，每个用户一个限流器
-        redisLimiterManager.doRateLimit("genChart_"+ loginUser.getId());
+        redisLimiterManager.doRateLimit("genChart_" + loginUser.getId());
 
         StringBuilder userInput = new StringBuilder();
         String csv = ExcelUtils.excelToCsv(multipartFile);
@@ -469,8 +475,8 @@ public class ChartController {
      */
     @PostMapping("/genByAiMq")
     public BaseResponse<BiResponse> genChartByAIMq(@RequestPart("file") MultipartFile multipartFile,
-                                                      GenChartByAiRequest genChartByAiRequest,
-                                                      HttpServletRequest request) {
+                                                   GenChartByAiRequest genChartByAiRequest,
+                                                   HttpServletRequest request) {
         String name = genChartByAiRequest.getName();
         String goal = genChartByAiRequest.getGoal();
         String chartType = genChartByAiRequest.getChartType();
@@ -492,7 +498,7 @@ public class ChartController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "暂不支持" + suffix + "文件类型");
         }
         // 限流判断，每个用户一个限流器
-        redisLimiterManager.doRateLimit("genChart_"+ userId);
+        redisLimiterManager.doRateLimit("genChart_" + userId);
 
         long chartId = chartService.genChartAndTable(multipartFile, name, goal, chartType, userId);
 

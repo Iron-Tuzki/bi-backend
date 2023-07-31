@@ -31,4 +31,8 @@
         ${sql}
     </insert>
 
+    <select id="getColumnsAndHeaders" resultType="java.util.Map">
+        select headers, columnNames from chart_sql_info where chartId = #{chartId}
+    </select>
+
 </mapper>
