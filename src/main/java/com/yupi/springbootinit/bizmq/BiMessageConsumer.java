@@ -3,7 +3,7 @@ package com.yupi.springbootinit.bizmq;
 import cn.hutool.json.JSONUtil;
 import com.rabbitmq.client.Channel;
 import com.yupi.springbootinit.common.ErrorCode;
-import com.yupi.springbootinit.constant.BiMqConstant;
+import com.yupi.springbootinit.constant.MQConstant;
 import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.manager.AiManager;
@@ -39,7 +39,7 @@ public class BiMessageConsumer {
     @Resource
     private UserNotificationService userNotificationService;
 
-    @RabbitListener(queues = {BiMqConstant.BI_QUEUE_NAME}, ackMode = "MANUAL")
+    @RabbitListener(queues = {MQConstant.CHART_QUEUE_NAME}, ackMode = "MANUAL")
     public void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         try {
             if (StringUtils.isBlank(message)) {
@@ -75,7 +75,7 @@ public class BiMessageConsumer {
 
             /* 开始调用Ai接口获取图表信息 */
             log.info("********* begin invoke AI service 4 bi");
-            String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput, BiMqConstant.BI_QUEUE_NAME);
+            String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput, MQConstant.CHART_QUEUE_NAME);
 
             String[] split = result.split("】】】】】");
             if (split.length < 3) {

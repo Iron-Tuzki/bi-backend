@@ -2,7 +2,7 @@ package com.yupi.springbootinit.bizmq;
 
 import com.rabbitmq.client.Channel;
 import com.yupi.springbootinit.common.ErrorCode;
-import com.yupi.springbootinit.constant.BiMqConstant;
+import com.yupi.springbootinit.constant.MQConstant;
 import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.manager.AiManager;
@@ -46,7 +46,7 @@ public class SqlMessageConsumer {
     private UserNotificationService userNotificationService;
 
 
-    @RabbitListener(queues = {BiMqConstant.SQL_QUEUE_NAME}, ackMode = "MANUAL")
+    @RabbitListener(queues = {MQConstant.SQL_QUEUE_NAME}, ackMode = "MANUAL")
     public void receiveMessage(String message,
                                Channel channel,
                                @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
@@ -77,9 +77,9 @@ public class SqlMessageConsumer {
 
             /* 调用AI接口 */
             log.info("********* begin invoke AI service 4 sql");
-            String sql4Table = aiManager.doChat(CommonConstant.SQL_AI_MODEL_ID, userInput, BiMqConstant.SQL_QUEUE_NAME);
-            log.info("sql create table :::" + sql4Table);
-            log.info("sql insert date :::" + sql4Insert);
+            String sql4Table = aiManager.doChat(CommonConstant.SQL_AI_MODEL_ID, userInput, MQConstant.SQL_QUEUE_NAME);
+            log.info("sql create table ::::::" + sql4Table);
+            log.info("sql insert date ::::::" + sql4Insert);
             try {
                 String columns = extractColumns(sql4Table);
                 chartSqlInfo.setColumnNames(columns);

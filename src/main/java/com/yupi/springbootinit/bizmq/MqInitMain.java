@@ -3,7 +3,7 @@ package com.yupi.springbootinit.bizmq;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-import com.yupi.springbootinit.constant.BiMqConstant;
+import com.yupi.springbootinit.constant.MQConstant;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -23,30 +23,30 @@ public class MqInitMain {
 
             /* 死信队列交换机和队列
              * 该死信队列用于处理异常，发生异常后标记chart为失败 */
-            channel.exchangeDeclare(BiMqConstant.DL_EXCHANGE_NAME, "direct");
-            channel.queueDeclare(BiMqConstant.DL_QUEUE_NAME, true, false, false, null);
-            channel.queueBind(BiMqConstant.DL_QUEUE_NAME, BiMqConstant.DL_EXCHANGE_NAME, BiMqConstant.DL_ROUTING_KEY);
+            channel.exchangeDeclare(MQConstant.DL_EXCHANGE_NAME, "direct");
+            channel.queueDeclare(MQConstant.DL_QUEUE_NAME_C, true, false, false, null);
+            channel.queueBind(MQConstant.DL_QUEUE_NAME_C, MQConstant.DL_EXCHANGE_NAME, MQConstant.DL_ROUTING_KEY_C);
 
-            channel.queueDeclare(BiMqConstant.DL_QUEUE_SQL_NAME, true, false, false, null);
-            channel.queueBind(BiMqConstant.DL_QUEUE_SQL_NAME, BiMqConstant.DL_EXCHANGE_NAME, BiMqConstant.DL_ROUTING_SQL_KEY);
+            channel.queueDeclare(MQConstant.DL_QUEUE_NAME_SQL, true, false, false, null);
+            channel.queueBind(MQConstant.DL_QUEUE_NAME_SQL, MQConstant.DL_EXCHANGE_NAME, MQConstant.DL_ROUTING_KEY_SQL);
 
             /* 正常业务交换机和队列
              * params 用于绑定死信交换机 */
             Map<String, Object> params = new HashMap<>();
-            params.put("x-dead-letter-exchange", BiMqConstant.DL_EXCHANGE_NAME);
-            params.put("x-dead-letter-routing-key", BiMqConstant.DL_ROUTING_KEY);
+            params.put("x-dead-letter-exchange", MQConstant.DL_EXCHANGE_NAME);
+            params.put("x-dead-letter-routing-key", MQConstant.DL_ROUTING_KEY_C);
 
-            channel.exchangeDeclare(BiMqConstant.BI_EXCHANGE_NAME, "direct");
-            channel.queueDeclare(BiMqConstant.BI_QUEUE_NAME, true, false, false, params);
-            channel.queueBind(BiMqConstant.BI_QUEUE_NAME, BiMqConstant.BI_EXCHANGE_NAME, BiMqConstant.BI_ROUTING_KEY);
+            channel.exchangeDeclare(MQConstant.BI_EXCHANGE_NAME, "direct");
+            channel.queueDeclare(MQConstant.CHART_QUEUE_NAME, true, false, false, params);
+            channel.queueBind(MQConstant.CHART_QUEUE_NAME, MQConstant.BI_EXCHANGE_NAME, MQConstant.CHART_ROUTING_KEY);
 
 
             Map<String, Object> params1 = new HashMap<>();
-            params1.put("x-dead-letter-exchange", BiMqConstant.DL_EXCHANGE_NAME);
-            params1.put("x-dead-letter-routing-key", BiMqConstant.DL_ROUTING_SQL_KEY);
+            params1.put("x-dead-letter-exchange", MQConstant.DL_EXCHANGE_NAME);
+            params1.put("x-dead-letter-routing-key", MQConstant.DL_ROUTING_KEY_SQL);
 
-            channel.queueDeclare(BiMqConstant.SQL_QUEUE_NAME, true, false, false, params1);
-            channel.queueBind(BiMqConstant.SQL_QUEUE_NAME, BiMqConstant.BI_EXCHANGE_NAME, BiMqConstant.SQL_ROUTING_KEY);
+            channel.queueDeclare(MQConstant.SQL_QUEUE_NAME, true, false, false, params1);
+            channel.queueBind(MQConstant.SQL_QUEUE_NAME, MQConstant.BI_EXCHANGE_NAME, MQConstant.SQL_ROUTING_KEY);
 
         } catch (Exception e) {
             throw new RuntimeException(e);

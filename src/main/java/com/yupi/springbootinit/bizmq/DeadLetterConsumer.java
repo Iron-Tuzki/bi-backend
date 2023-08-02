@@ -1,7 +1,7 @@
 package com.yupi.springbootinit.bizmq;
 
 import com.rabbitmq.client.Channel;
-import com.yupi.springbootinit.constant.BiMqConstant;
+import com.yupi.springbootinit.constant.MQConstant;
 import com.yupi.springbootinit.model.entity.Chart;
 import com.yupi.springbootinit.model.entity.ChartSqlInfo;
 import com.yupi.springbootinit.service.ChartService;
@@ -32,7 +32,7 @@ public class DeadLetterConsumer {
     @Resource
     private ChartSqlInfoService chartSqlInfoService;
 
-    @RabbitListener(queues = {BiMqConstant.DL_QUEUE_NAME}, ackMode = "MANUAL")
+    @RabbitListener(queues = {MQConstant.DL_QUEUE_NAME_C}, ackMode = "MANUAL")
     private void receiveMessage(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         try {
             log.info("dead_letter_queue receive:" + message);
@@ -52,7 +52,7 @@ public class DeadLetterConsumer {
         }
     }
 
-    @RabbitListener(queues = {BiMqConstant.DL_QUEUE_SQL_NAME}, ackMode = "MANUAL")
+    @RabbitListener(queues = {MQConstant.DL_QUEUE_NAME_SQL}, ackMode = "MANUAL")
     private void receiveMessageSql(String message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) {
         try {
             log.info("dead_letter_queue receive:" + message);

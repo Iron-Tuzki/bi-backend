@@ -1,6 +1,6 @@
 package com.yupi.springbootinit.bizmq;
 
-import com.yupi.springbootinit.constant.BiMqConstant;
+import com.yupi.springbootinit.constant.MQConstant;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +24,6 @@ public class BiMessageProducer {
      * @param message
      */
     public void sendMessage(String message) {
-        rabbitTemplate.convertAndSend(BiMqConstant.BI_EXCHANGE_NAME, BiMqConstant.BI_ROUTING_KEY, message);
+        rabbitTemplate.convertAndSend(MQConstant.BI_EXCHANGE_NAME, MQConstant.CHART_ROUTING_KEY, message);
     }
 }

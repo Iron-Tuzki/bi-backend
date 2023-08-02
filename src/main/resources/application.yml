@@ -45,6 +45,10 @@ spring:
     port: 5672
     username: guest
     password: guest
+    # 手动提交消息
+    listener:
+      direct:
+        acknowledge-mode: manual
 server:
   address: 0.0.0.0
   port: 8080
