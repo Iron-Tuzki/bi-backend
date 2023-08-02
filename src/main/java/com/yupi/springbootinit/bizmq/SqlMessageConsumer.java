@@ -55,7 +55,7 @@ public class SqlMessageConsumer {
                 channel.basicNack(deliveryTag, false, false);
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "队列消息传输异常");
             }
-            log.info("create chart table begin, message=" + message);
+            log.info("SqlMessageConsumer receive message:" + message);
             Long chartId = Long.valueOf(message);
             ChartSqlInfo chartSqlInfo = new ChartSqlInfo();
             chartSqlInfo.setChartId(chartId);
@@ -76,10 +76,8 @@ public class SqlMessageConsumer {
                     "字段注释：" + headers + "\n";
 
             /* 调用AI接口 */
-            log.info("********* begin invoke AI service 4 sql");
+            log.info("********* begin invoke AI service for sql");
             String sql4Table = aiManager.doChat(CommonConstant.SQL_AI_MODEL_ID, userInput, MQConstant.SQL_QUEUE_NAME);
-            log.info("sql create table ::::::" + sql4Table);
-            log.info("sql insert date ::::::" + sql4Insert);
             try {
                 String columns = extractColumns(sql4Table);
                 chartSqlInfo.setColumnNames(columns);
@@ -91,8 +89,6 @@ public class SqlMessageConsumer {
                     notifyUser(chartId, "更新chart sql失败");
                     return;
                 }
-                // sqlExecuteUtils.execute(sql4Table);
-                // sqlExecuteUtils.execute(sql4Insert);
                 chartSqlInfoMapper.createTable(sql4Table);
                 chartSqlInfoMapper.insertData(sql4Insert);
             } catch (RuntimeException e) {
@@ -101,7 +97,7 @@ public class SqlMessageConsumer {
                 log.error(e.getMessage());
                 throw new RuntimeException(e);
             }
-            log.info("********* end invoke AI service 4 sql");
+            log.info("********* end invoke AI service for sql");
 
             // 更新状态
             chartSqlInfo.setStatus("success");

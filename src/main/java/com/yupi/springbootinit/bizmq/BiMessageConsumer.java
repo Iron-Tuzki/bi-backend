@@ -46,7 +46,7 @@ public class BiMessageConsumer {
                 channel.basicNack(deliveryTag, false, false);
                 throw new BusinessException(ErrorCode.SYSTEM_ERROR, "队列消息传输异常");
             }
-            log.info("receive message:" + message);
+            log.info("BiMessageConsumer receive message:" + message);
             long chartId = Long.parseLong(message);
             // 更新状态
             Chart updateChart = new Chart();
@@ -74,13 +74,13 @@ public class BiMessageConsumer {
                     "原始数据: " + chartData + "\n";
 
             /* 开始调用Ai接口获取图表信息 */
-            log.info("********* begin invoke AI service 4 bi");
+            log.info("********* begin invoke AI service for chart");
             String result = aiManager.doChat(CommonConstant.CHART_AI_MODEL_ID, userInput, MQConstant.CHART_QUEUE_NAME);
 
             String[] split = result.split("】】】】】");
             if (split.length < 3) {
                 channel.basicNack(deliveryTag, false, false);
-                notifyUser(chartId, "AI生成图表数据格式出错");
+                notifyUser(chartId, "AI生成图表的数据格式出错");
                 return;
             }
             String code = split[1].trim();
@@ -88,7 +88,7 @@ public class BiMessageConsumer {
             /* 校验json格式 */
             /* 若流程中发生异常，未手动确认消费成功或失败，则该消息会重新进入原队列，下次重启后会重新消费 */
             String chartCode = JSONUtil.toJsonStr(JSONUtil.parseObj(code));
-            log.info("********* end invoke AI service 4 bi");
+            log.info("********* end invoke AI service for chart");
             /* 结束调用Ai接口获取图表信息 */
 
             // 更新AI生成的数据

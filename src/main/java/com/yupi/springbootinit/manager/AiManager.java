@@ -30,8 +30,8 @@ public class AiManager {
      */
     public synchronized String doChat(Long modelId, String message, String queueName) {
         if (StringUtils.isNotBlank(queueName)) {
-            log.info("当前线程：" + Thread.currentThread().getName() + "\n"
-                    + "当前消费者" + queueName + "正在调用AI");
+            log.info("current thread:：" + Thread.currentThread().getName() + "\n"
+                    + "current queue:" + queueName + " is invoking AI");
         }
 
         DevChatRequest devChatRequest = new DevChatRequest();
@@ -41,7 +41,7 @@ public class AiManager {
         devChatRequest.setMessage(message);
 
         BaseResponse<DevChatResponse> response = yuCongMingClient.doChat(devChatRequest);
-
+        log.info("AI response message :::::: "+response.getMessage());
         return response.getData().getContent();
     }
 
