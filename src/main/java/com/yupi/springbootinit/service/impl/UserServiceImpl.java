@@ -8,11 +8,14 @@ import com.yupi.springbootinit.constant.CommonConstant;
 import com.yupi.springbootinit.exception.BusinessException;
 import com.yupi.springbootinit.mapper.UserMapper;
 import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
+import com.yupi.springbootinit.model.dto.user.UserTokenDTO;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.enums.UserRoleEnum;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
 import com.yupi.springbootinit.model.vo.UserVO;
+import com.yupi.springbootinit.service.RedisService;
 import com.yupi.springbootinit.service.UserService;
+import com.yupi.springbootinit.utils.JWTUtils;
 import com.yupi.springbootinit.utils.SqlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -20,7 +23,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -41,6 +46,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 盐值，混淆密码
      */
     private static final String SALT = "yupi";
+
+    @Resource
+    private RedisService redisService;
 
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
@@ -81,7 +89,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
+    public String userLogin(String userAccount, String userPassword,
+                            HttpServletResponse response,
+                            HttpServletRequest request) {
         // 1. 校验
         if (StringUtils.isAnyBlank(userAccount, userPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
@@ -105,8 +115,25 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
         }
         // 3. 记录用户的登录态
-        request.getSession().setAttribute(USER_LOGIN_STATE, user);
-        return this.getLoginUserVO(user);
+        /*
+        只要在服务器端创建了Session，即使不写addCookie("JSESSIONID", id)，JSESSIONID仍会被作为Cookie返回。
+         */
+        // request.getSession().setAttribute(USER_LOGIN_STATE, user);
+        // log.info("JSESSIONID :****** " + request.getSession().getId());
+        //
+        // Cookie cookie = new Cookie("myCookie", "cookieValue");
+        // // 设置Cookie的过期时间（可选）
+        // cookie.setMaxAge(36000);
+        // response.addCookie(cookie);
+        // return this.getLoginUserVO(user);
+
+        // 3. 生成token并存入redis
+        UserTokenDTO userTokenDTO = new UserTokenDTO();
+        BeanUtils.copyProperties(user, userTokenDTO);
+        String token = JWTUtils.generateToken(userTokenDTO);
+        redisService.set(String.valueOf(userTokenDTO.getId()), token);
+        return token;
+
     }
 
     // @Override
@@ -150,14 +177,18 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Override
     public User getLoginUser(HttpServletRequest request) {
         // 先判断是否已登录
-        Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
-        User currentUser = (User) userObj;
-        if (currentUser == null || currentUser.getId() == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
-        }
+        // Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
+        // User currentUser = (User) userObj;
+        // if (currentUser == null || currentUser.getId() == null) {
+        //     throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+        // }
+        String authToken = request.getHeader("Authorization");
+        String token = authToken.substring("Bearer".length() + 1).trim();
+        UserTokenDTO userTokenDTO = JWTUtils.parseToken(token);
         // 从数据库查询（追求性能的话可以注释，直接走缓存）
-        long userId = currentUser.getId();
-        currentUser = this.getById(userId);
+        // todo 使用redis
+        long userId = userTokenDTO.getId();
+        User currentUser = this.getById(userId);
         if (currentUser == null) {
             throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
         }
@@ -204,17 +235,23 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 用户注销
-     *
-     * @param request
+     * @param userId
+     * @return
      */
     @Override
-    public boolean userLogout(HttpServletRequest request) {
-        if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+    public boolean userLogout(String userId) {
+        // 删除token
+        boolean delete = redisService.delete(userId);
+        if (!delete) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "移除token失败");
         }
-        // 移除登录态
-        request.getSession().removeAttribute(USER_LOGIN_STATE);
         return true;
+        // 移除session
+        // if (request.getSession().getAttribute(USER_LOGIN_STATE) == null) {
+        //     throw new BusinessException(ErrorCode.OPERATION_ERROR, "未登录");
+        // }
+        // // 移除登录态
+        // request.getSession().removeAttribute(USER_LOGIN_STATE);
     }
 
     @Override

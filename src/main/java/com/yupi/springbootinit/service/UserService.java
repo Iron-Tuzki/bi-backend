@@ -6,9 +6,10 @@ import com.yupi.springbootinit.model.dto.user.UserQueryRequest;
 import com.yupi.springbootinit.model.entity.User;
 import com.yupi.springbootinit.model.vo.LoginUserVO;
 import com.yupi.springbootinit.model.vo.UserVO;
-import java.util.List;
+
 import javax.servlet.http.HttpServletRequest;
-import me.chanjar.weixin.common.bean.WxOAuth2UserInfo;
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 用户服务
@@ -34,9 +35,9 @@ public interface UserService extends IService<User> {
      * @param userAccount  用户账户
      * @param userPassword 用户密码
      * @param request
-     * @return 脱敏后的用户信息
+     * @return token
      */
-    LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request);
+    String userLogin(String userAccount, String userPassword, HttpServletResponse response, HttpServletRequest request);
 
     // /**
     //  * 用户登录（微信开放平台）
@@ -82,10 +83,10 @@ public interface UserService extends IService<User> {
     /**
      * 用户注销
      *
-     * @param request
+     * @param userId
      * @return
      */
-    boolean userLogout(HttpServletRequest request);
+    boolean userLogout(String userId);
 
     /**
      * 获取脱敏的已登录用户信息

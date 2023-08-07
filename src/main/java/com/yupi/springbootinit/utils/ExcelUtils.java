@@ -37,13 +37,11 @@ public class ExcelUtils {
             return "";
         }
         // 转为csv格式
-        // todo 使用AI生成建表语句
         StringBuilder originalCsv = new StringBuilder();
         LinkedHashMap<Integer, String> headMap = (LinkedHashMap<Integer, String>) list.get(0);
         List<String> headList = headMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList());
         originalCsv.append(StringUtils.join(headList, ",")).append("\n");
 
-        // todo 生成插入语句
         for (int i = 1; i < list.size(); i++) {
             LinkedHashMap<Integer, String> dataMap = (LinkedHashMap<Integer, String>) list.get(i);
             List<String> dataList = dataMap.values().stream().filter(ObjectUtils::isNotEmpty).collect(Collectors.toList());
